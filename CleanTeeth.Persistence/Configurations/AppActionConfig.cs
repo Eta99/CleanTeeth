@@ -11,8 +11,13 @@ namespace CleanTeeth.Persistence.Configurations
             builder.ToTable("Actions");
             builder.HasKey(a => a.Id);
             builder.Property(a => a.Id).ValueGeneratedOnAdd();
+            builder.Property(a => a.TypeId).IsRequired();
             builder.Property(a => a.Name).HasMaxLength(256).IsRequired();
             builder.Property(a => a.Title).HasMaxLength(256).IsRequired();
+            builder.HasOne(a => a.Type)
+                .WithMany(t => t.Actions)
+                .HasForeignKey(a => a.TypeId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

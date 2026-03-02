@@ -6,7 +6,7 @@ namespace CleanTeeth.Application.Features.AppActions.Queries.GetActionsList
     {
         public static ActionListDTO ToDTO(this AppAction action)
         {
-            return new ActionListDTO { Id = action.Id, Name = action.Name, Title = action.Title };
+            return new ActionListDTO { Id = action.Id, TypeId = action.TypeId, Name = action.Name, Title = action.Title };
         }
     }
 }

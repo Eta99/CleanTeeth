@@ -18,7 +18,7 @@ namespace CleanTeeth.Application.Features.AppActions.Commands.CreateAction
 
         public async Task<long> Handle(CreateActionCommand command)
         {
-            var action = new AppAction(command.Name, command.Title);
+            var action = new AppAction(command.TypeId, command.Name, command.Title);
             try
             {
                 var result = await _repository.Add(action);

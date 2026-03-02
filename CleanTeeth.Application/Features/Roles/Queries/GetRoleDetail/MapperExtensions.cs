@@ -7,7 +7,7 @@ namespace CleanTeeth.Application.Features.Roles.Queries.GetRoleDetail
         public static RoleDetailDTO ToDTO(this Role role)
         {
             var actions = role.Actions
-                .Select(a => new ActionDTO { Id = a.Id, Name = a.Name, Title = a.Title })
+                .Select(a => new ActionDTO { Id = a.Id, TypeId = a.TypeId, Name = a.Name, Title = a.Title })
                 .ToList();
             return new RoleDetailDTO
             {

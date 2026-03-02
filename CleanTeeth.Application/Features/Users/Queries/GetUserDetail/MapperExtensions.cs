@@ -11,7 +11,7 @@ namespace CleanTeeth.Application.Features.Users.Queries.GetUserDetail
                 .SelectMany(r => r.Actions)
                 .GroupBy(a => a.Id)
                 .Select(g => g.First())
-                .Select(a => new ActionDTO { Id = a.Id, Name = a.Name, Title = a.Title })
+                .Select(a => new ActionDTO { Id = a.Id, TypeId = a.TypeId, Name = a.Name, Title = a.Title })
                 .ToList();
 
             return new UserDetailDTO

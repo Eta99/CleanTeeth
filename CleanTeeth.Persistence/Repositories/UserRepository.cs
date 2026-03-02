@@ -18,5 +18,19 @@ namespace CleanTeeth.Persistence.Repositories
                 .ThenInclude(r => r.Actions)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
+
+        public async Task<User?> GetByLogin(string login)
+        {
+            return await context.Users
+                .FirstOrDefaultAsync(u => u.Login == login);
+        }
+
+        public async Task<User?> GetByLoginWithRolesAndActions(string login)
+        {
+            return await context.Users
+                .Include(u => u.Roles)
+                .ThenInclude(r => r.Actions)
+                .FirstOrDefaultAsync(u => u.Login == login);
+        }
     }
 }

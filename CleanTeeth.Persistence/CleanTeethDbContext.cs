@@ -31,6 +31,7 @@ namespace CleanTeeth.Persistence
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<ActionType> Types { get; set; }
         public DbSet<AppAction> Actions { get; set; }
     }
 }

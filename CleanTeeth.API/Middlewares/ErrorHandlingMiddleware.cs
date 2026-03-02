@@ -1,4 +1,4 @@
-﻿using CleanTeeth.Application.Exceptions;
+using CleanTeeth.Application.Exceptions;
 using CleanTeeth.Domain.Exceptions;
 using System.Net;
 using System.Text.Json;
@@ -38,6 +38,9 @@ namespace CleanTeeth.API.Middlewares
             {
                 case NotFoundException:
                     httpStatusCode = HttpStatusCode.NotFound;
+                    break;
+                case ForbiddenException:
+                    httpStatusCode = HttpStatusCode.Forbidden;
                     break;
                 case BusinessRuleException businessRuleException:
                     httpStatusCode = HttpStatusCode.BadRequest;

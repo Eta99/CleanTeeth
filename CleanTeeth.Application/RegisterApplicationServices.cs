@@ -1,8 +1,10 @@
-﻿using CleanTeeth.Application.Features.DentalOffices.Commands.CreateDentalOffice;
+using CleanTeeth.Application.Contracts.Services;
+using CleanTeeth.Application.Features.DentalOffices.Commands.CreateDentalOffice;
 using CleanTeeth.Application.Features.DentalOffices.Commands.DeleteDentalOffice;
 using CleanTeeth.Application.Features.DentalOffices.Commands.UpdateDentalOffice;
 using CleanTeeth.Application.Features.DentalOffices.Queries.GetDentalOfficeDetail;
 using CleanTeeth.Application.Features.DentalOffices.Queries.GetDentalOfficesList;
+using CleanTeeth.Application.Services;
 using CleanTeeth.Application.Utilities;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,6 +20,7 @@ namespace CleanTeeth.Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddTransient<IMediator, SimpleMediator>();
+            services.AddScoped<IEnsureCurrentUserService, EnsureCurrentUserService>();
 
             services.Scan(scan => scan.FromAssembliesOf(typeof(RegisterApplicationServices))
                 .AddClasses(c => c.AssignableTo(typeof(IRequestHandler<>)))

@@ -22,9 +22,15 @@ builder.Services.AddAuthorization(options =>
     //    .RequireAssertion(_ => true)  // ??? options.DefaultPolicy ? AllowAnonymous
     //    .Build();
 
-    options.FallbackPolicy = null;
+    // Require auth for endpoints without [Authorize].
+    // This forces Negotiate handshake so HttpContext.User.Identity.IsAuthenticated becomes true.
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CleanTeeth.Application.Contracts.Services.ICurrentUserContext, CleanTeeth.API.Services.CurrentUserContext>();
 builder.Services.AddPersistenceServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
@@ -55,8 +61,9 @@ app.UseCustomExceptionHandler();
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();   // ????????
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseCurrentUser();
 // Windows-?????????????? (Negotiate ???????? Kerberos ??? NTLM)
 
 

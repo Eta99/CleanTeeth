@@ -1,4 +1,5 @@
-﻿using CleanTeeth.Application.Exceptions;
+using CleanTeeth.Application.Contracts.Services;
+using CleanTeeth.Application.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
 using System;
@@ -21,6 +22,7 @@ namespace CleanTeeth.Application.Utilities
         public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
             await ApplyValidations(request);
+            await CheckRequiredAction(request);
 
             var handlerType = typeof(IRequestHandler<,>)
         .MakeGenericType(request.GetType(), typeof(TResponse));
@@ -40,6 +42,7 @@ namespace CleanTeeth.Application.Utilities
         public async Task Send(IRequest request)
         {
             await ApplyValidations(request);
+            await CheckRequiredAction(request);
 
             var handlerType = typeof(IRequestHandler<>).MakeGenericType(request.GetType());
 
@@ -52,6 +55,21 @@ namespace CleanTeeth.Application.Utilities
 
             var method = handlerType.GetMethod("Handle")!;
             await (Task)method.Invoke(handler, new object[] { request })!;
+        }
+
+        private Task CheckRequiredAction(object request)
+        {
+            if (request is not IRequireAction requireAction)
+                return Task.CompletedTask;
+
+            var currentUser = serviceProvider.GetService(typeof(ICurrentUserContext)) as ICurrentUserContext;
+            if (currentUser is null || !currentUser.IsAuthenticated)
+                throw new ForbiddenException();
+
+            if (!currentUser.HasAction(requireAction.RequiredActionName))
+                throw new ForbiddenException();
+
+            return Task.CompletedTask;
         }
 
         private async Task ApplyValidations(object request)

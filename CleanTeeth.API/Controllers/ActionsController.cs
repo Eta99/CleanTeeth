@@ -37,14 +37,14 @@ namespace CleanTeeth.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateActionDto dto)
         {
-            await _mediator.Send(new CreateActionCommand { Name = dto.Name, Title = dto.Title });
+            await _mediator.Send(new CreateActionCommand { TypeId = dto.TypeId, Name = dto.Name, Title = dto.Title });
             return Ok();
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(long id, [FromBody] UpdateActionDto dto)
         {
-            await _mediator.Send(new UpdateActionCommand { Id = id, Name = dto.Name, Title = dto.Title });
+            await _mediator.Send(new UpdateActionCommand { Id = id, TypeId = dto.TypeId, Name = dto.Name, Title = dto.Title });
             return NoContent();
         }
 

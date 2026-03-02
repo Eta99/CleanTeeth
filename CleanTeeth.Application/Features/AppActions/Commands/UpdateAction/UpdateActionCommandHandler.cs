@@ -22,7 +22,7 @@ namespace CleanTeeth.Application.Features.AppActions.Commands.UpdateAction
             if (action is null)
                 throw new NotFoundException();
 
-            action.Update(request.Name, request.Title);
+            action.Update(request.TypeId, request.Name, request.Title);
 
             try
             {

@@ -4,6 +4,8 @@ namespace CleanTeeth.API.DTOs.Actions
 {
     public class CreateActionDto
     {
+        public long TypeId { get; set; }
+
         [Required]
         [StringLength(256)]
         public required string Name { get; set; }

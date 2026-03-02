@@ -5,23 +5,27 @@ namespace CleanTeeth.Domain.Entities
     public class AppAction
     {
         public long Id { get; private set; }
+        public long TypeId { get; private set; }
         public string Name { get; private set; } = null!;
         public string Title { get; private set; } = null!;
 
+        public ActionType Type { get; private set; } = null!;
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
 
         private AppAction() { }
 
-        public AppAction(string name, string title)
+        public AppAction(long typeId, string name, string title)
         {
+            TypeId = typeId;
             EnforceNameBusinessRules(name);
             EnforceTitleBusinessRules(title);
             Name = name;
             Title = title;
         }
 
-        public void Update(string name, string title)
+        public void Update(long typeId, string name, string title)
         {
+            TypeId = typeId;
             EnforceNameBusinessRules(name);
             EnforceTitleBusinessRules(title);
             Name = name;
