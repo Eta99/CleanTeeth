@@ -17,9 +17,9 @@ builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    // ѕо умолчанию разрешаем анонимный доступ
+    // ?? ????????? ????????? ????????? ??????
     //options.FallbackPolicy = new AuthorizationPolicyBuilder()
-    //    .RequireAssertion(_ => true)  // или options.DefaultPolicy с AllowAnonymous
+    //    .RequireAssertion(_ => true)  // ??? options.DefaultPolicy ? AllowAnonymous
     //    .Build();
 
     options.FallbackPolicy = null;
@@ -34,20 +34,44 @@ builder.Services.AddInfrastructureServices();
 
 builder.Services.AddHostedService<AppointmentsReminderJob>();
 
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    // ?????????? ????? ????: ??? ?????? ActionDTO (User/Role) ?? ???????????
+    options.CustomSchemaIds(type => type.FullName ?? type.Name);
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CleanTeeth API v1"));
+}
 
 app.UseCustomExceptionHandler();
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();   // добавить
+app.UseAuthentication();   // ????????
 app.UseAuthorization();
-// Windows-аутентификаци€ (Negotiate выбирает Kerberos или NTLM)
+// Windows-?????????????? (Negotiate ???????? Kerberos ??? NTLM)
 
 
-
+if (app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path == "/" || context.Request.Path == "")
+        {
+            context.Response.Redirect("/swagger");
+            return;
+        }
+        await next();
+    });
+}
 
 app.MapControllers();
 
