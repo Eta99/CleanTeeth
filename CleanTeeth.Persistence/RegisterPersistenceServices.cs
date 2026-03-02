@@ -1,4 +1,4 @@
-﻿using CleanTeeth.Application.Contracts.Persistence;
+using CleanTeeth.Application.Contracts.Persistence;
 using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Persistence.Repositories;
 using CleanTeeth.Persistence.UnitsOfWork;
@@ -23,6 +23,9 @@ namespace CleanTeeth.Persistence
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<IDentistRepository, DentistRepository>();
             services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IAppActionRepository, AppActionRepository>();
 
             services.AddScoped<IUnitOfWork, UnitOfWorkEFCore>();
 

@@ -1,4 +1,4 @@
-﻿using CleanTeeth.Domain.Entities;
+using CleanTeeth.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -29,5 +29,8 @@ namespace CleanTeeth.Persistence
         public DbSet<Patient> Patients { get; set; }
         public DbSet<Dentist> Dentists { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<AppAction> Actions { get; set; }
     }
 }
