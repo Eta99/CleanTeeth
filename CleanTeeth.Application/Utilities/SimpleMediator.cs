@@ -59,15 +59,15 @@ namespace CleanTeeth.Application.Utilities
 
         private Task CheckRequiredAction(object request)
         {
-            if (request is not IRequireAction requireAction)
-                return Task.CompletedTask;
+            //if (request is not IRequireAction requireAction)
+            //    return Task.CompletedTask;
 
             var currentUser = serviceProvider.GetService(typeof(ICurrentUserContext)) as ICurrentUserContext;
             if (currentUser is null || !currentUser.IsAuthenticated)
                 throw new ForbiddenException();
 
-            if (!currentUser.HasAction(requireAction.RequiredActionName))
-                throw new ForbiddenException();
+            //if (!currentUser.HasAction(requireAction.RequiredActionName))
+            //    throw new ForbiddenException();
 
             return Task.CompletedTask;
         }

@@ -8,10 +8,12 @@ namespace CleanTeeth.API.Middlewares
     public class ErrorHandlingMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IHostEnvironment _env;
 
-        public ErrorHandlingMiddleware(RequestDelegate next)
+        public ErrorHandlingMiddleware(RequestDelegate next, IHostEnvironment env)
         {
             _next = next;
+            _env = env;
         }
 
         public async Task Invoke(HttpContext context)
@@ -19,8 +21,8 @@ namespace CleanTeeth.API.Middlewares
             try
             {
                 await _next(context);
-            } 
-            catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 await HandleException(context, ex);
             }
@@ -28,10 +30,11 @@ namespace CleanTeeth.API.Middlewares
 
         private Task HandleException(HttpContext context, Exception exception)
         {
+            if (exception is System.Reflection.TargetInvocationException { InnerException: { } inner })
+                exception = inner;
+
             HttpStatusCode httpStatusCode = HttpStatusCode.InternalServerError;
-
             context.Response.ContentType = "application/json";
-
             var result = string.Empty;
 
             switch (exception)
@@ -50,10 +53,34 @@ namespace CleanTeeth.API.Middlewares
                     httpStatusCode = HttpStatusCode.BadRequest;
                     result = JsonSerializer.Serialize(customValidationException.ValidationErrors);
                     break;
+                case MediatorException mediatorEx:
+                    httpStatusCode = HttpStatusCode.BadRequest;
+                    result = JsonSerializer.Serialize(new { error = mediatorEx.Message });
+                    break;
+                case InvalidOperationException invalidOp when invalidOp.Message.Contains("Repository", StringComparison.OrdinalIgnoreCase):
+                    httpStatusCode = HttpStatusCode.BadRequest;
+                    result = JsonSerializer.Serialize(new { error = invalidOp.Message });
+                    break;
+            }
+
+            if ((int)httpStatusCode == 500)
+            {
+                if (_env.IsDevelopment() && string.IsNullOrEmpty(result))
+                {
+                    result = JsonSerializer.Serialize(new
+                    {
+                        error = exception.Message,
+                        type = exception.GetType().Name,
+                        stackTrace = exception.StackTrace
+                    });
+                }
+                else if (string.IsNullOrEmpty(result))
+                {
+                    result = JsonSerializer.Serialize(new { error = "An error occurred." });
+                }
             }
 
             context.Response.StatusCode = (int)httpStatusCode;
-
             return context.Response.WriteAsync(result);
         }
     }

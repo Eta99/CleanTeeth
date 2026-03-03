@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CleanTeeth.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class type : Migration
+    public partial class AddType : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
