@@ -8,28 +8,31 @@ namespace CleanTeeth.Domain.Entities
         public long TypeId { get; private set; }
         public string Name { get; private set; } = null!;
         public string Title { get; private set; } = null!;
+        public bool IsLoggable { get; private set; }
 
         public ActionType Type { get; private set; } = null!;
         public ICollection<Role> Roles { get; private set; } = new List<Role>();
 
         private AppAction() { }
 
-        public AppAction(long typeId, string name, string title)
+        public AppAction(long typeId, string name, string title, bool isLoggable = true)
         {
             TypeId = typeId;
             EnforceNameBusinessRules(name);
             EnforceTitleBusinessRules(title);
             Name = name;
             Title = title;
+            IsLoggable = isLoggable;
         }
 
-        public void Update(long typeId, string name, string title)
+        public void Update(long typeId, string name, string title, bool isLoggable = true)
         {
             TypeId = typeId;
             EnforceNameBusinessRules(name);
             EnforceTitleBusinessRules(title);
             Name = name;
             Title = title;
+            IsLoggable = isLoggable;
         }
 
         private static void EnforceNameBusinessRules(string name)

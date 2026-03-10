@@ -34,7 +34,8 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
                 await task.ConfigureAwait(false);
                 var result = (TEntity)task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task)!;
                 var idObject = LogHelper.GetEntityId(result);
-                await _logRepository.Add(new Log(idObject, oldValue: null, newValue: $"Create:{entityType.Name}"));
+                var newValueJson = LogHelper.ToLogJson(result);
+                await _logRepository.Add(new Log(idObject, oldValue: null, newValue: newValueJson));
                 await _unitOfWork.Commit();
                 return result;
             }

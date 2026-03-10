@@ -11,12 +11,14 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRepositoryLongKey<Log> _logRepository;
+        private readonly IAppActionRepository _actionRepository;
 
-        public CreateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository)
+        public CreateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository, IAppActionRepository actionRepository)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
             _logRepository = logRepository;
+            _actionRepository = actionRepository;
         }
 
         public async Task<object> Handle(CreateCommand request)
@@ -39,8 +41,13 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
                 var result = task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task);
                 if (result != null)
                 {
-                    var idObject = LogHelper.GetEntityId(result);
-                    await _logRepository.Add(new Log(idObject, oldValue: null, newValue: $"Create:{request.EntityType.Name}"));
+                    var action = await _actionRepository.GetByNameAsync(request.RequiredActionName);
+                    if (action?.IsLoggable == true)
+                    {
+                        var idObject = LogHelper.GetEntityId(result);
+                        var newValueJson = LogHelper.ToLogJson(result);
+                        await _logRepository.Add(new Log(idObject, oldValue: null, newValue: newValueJson));
+                    }
                 }
                 await _unitOfWork.Commit();
                 return result!;

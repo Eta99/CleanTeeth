@@ -54,10 +54,18 @@ namespace CleanTeeth.API.Controllers
         [HttpPut("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(Guid id, [FromBody] Patient entity)
         {
-            await _mediator.Send(new UpdateCommand<Patient> { Entity = entity });
-            return NoContent();
+            try
+            {
+                await _mediator.Send(new UpdateCommand<Patient> { Id = id, Entity = entity });
+                return NoContent();
+            }
+            catch (Application.Exceptions.NotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpDelete("{id:guid}")]
@@ -67,7 +75,7 @@ namespace CleanTeeth.API.Controllers
         {
             try
             {
-                await _mediator.Send(new DeleteCommand<Patient> { Id = id });
+                await _mediator.Send(new DeleteCommand<Patient> { Id = id, RequiredActionName = "Delete:Patient" });
                 return NoContent();
             }
             catch (Application.Exceptions.NotFoundException)

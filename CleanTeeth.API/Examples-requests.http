@@ -1,0 +1,41 @@
+# Примеры запросов для сущностей с Email (Patient, Dentist)
+# Email в JSON передаётся объектом с полем "value"
+
+### 1) Создать пациента — api/patients2 (типизированный контроллер)
+POST https://localhost:7037/api/patients2
+Content-Type: application/json
+
+{
+  "name": "Новый пациент",
+  "email": { "value": "patient@example.com" }
+}
+
+### 2) Создать пациента — universal CRUD (нужны права на действие Create:Patient)
+POST https://localhost:7037/api/universal/patients
+Content-Type: application/json
+
+{
+  "name": "Новый пациент",
+  "email": { "value": "patient@example.com" }
+}
+
+### 3) Создать доктора — universal CRUD
+POST https://localhost:7037/api/universal/dentists
+Content-Type: application/json
+
+{
+  "name": "Доктор Борис",
+  "email": { "value": "boris@example.com" }
+}
+
+### 4) Обновить пациента (подставьте свой Guid)
+PUT https://localhost:7037/api/patients2/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "name": "Обновлённое имя",
+  "email": { "value": "newemail@example.com" }
+}
+
+### 5) Удалить пациента
+DELETE https://localhost:7037/api/patients2/00000000-0000-0000-0000-000000000000

@@ -104,7 +104,12 @@ namespace CleanTeeth.API.Controllers
             if (entity == null)
                 return BadRequest("Request body could not be deserialized to entity.");
 
-            var command = new CreateCommand { EntityType = entityType, Entity = entity };
+            var command = new CreateCommand
+            {
+                EntityType = entityType,
+                Entity = entity,
+                RequiredActionName = $"Create:{entityType.Name}"
+            };
             var created = await _mediator.Send(command);
             return Ok(created);
         }
@@ -131,7 +136,12 @@ namespace CleanTeeth.API.Controllers
             if (entity == null)
                 return BadRequest("Request body could not be deserialized to entity.");
 
-            var command = new UpdateCommand { EntityType = entityType, Entity = entity };
+            var command = new UpdateCommand
+            {
+                EntityType = entityType,
+                Entity = entity,
+                RequiredActionName = $"Update:{entityType.Name}"
+            };
             await _mediator.Send(command);
             return NoContent();
         }
@@ -152,7 +162,12 @@ namespace CleanTeeth.API.Controllers
 
             try
             {
-                var command = new DeleteCommand { EntityType = entityType, Id = parsedId };
+                var command = new DeleteCommand
+                {
+                    EntityType = entityType,
+                    Id = parsedId,
+                    RequiredActionName = $"Delete:{entityType.Name}"
+                };
                 await _mediator.Send(command);
             }
             catch (Application.Exceptions.NotFoundException)

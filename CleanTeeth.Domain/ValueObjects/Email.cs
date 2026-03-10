@@ -1,4 +1,4 @@
-﻿using CleanTeeth.Domain.Exceptions;
+using CleanTeeth.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,20 +13,19 @@ namespace CleanTeeth.Domain.ValueObjects
 
         private Email() { }
 
-        public Email(string email)
+        public Email(string value)
         {
-            if (string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrWhiteSpace(value))
             {
-                throw new BusinessRuleException($"The {nameof(email)} is required");
+                throw new BusinessRuleException($"The {nameof(value)} is required");
             }
 
-            if (!email.Contains("@"))
+            if (!value.Contains("@"))
             {
-                throw new BusinessRuleException($"The {nameof(email)} is not valid");
+                throw new BusinessRuleException($"The {nameof(value)} is not valid");
             }
 
-            Value = email;
-
+            Value = value;
         }
     }
 }

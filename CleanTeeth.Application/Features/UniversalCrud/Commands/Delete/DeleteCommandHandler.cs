@@ -12,12 +12,14 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IRepositoryLongKey<Log> _logRepository;
+        private readonly IAppActionRepository _actionRepository;
 
-        public DeleteCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository)
+        public DeleteCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository, IAppActionRepository actionRepository)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
             _logRepository = logRepository;
+            _actionRepository = actionRepository;
         }
 
         public async Task Handle(DeleteCommand request)
@@ -57,8 +59,13 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
 
             try
             {
-                var idObject = request.Id?.ToString() ?? LogHelper.GetEntityId(entity);
-                await _logRepository.Add(new Log(idObject, oldValue: $"Delete:{request.EntityType.Name}", newValue: null));
+                var action = await _actionRepository.GetByNameAsync(request.RequiredActionName);
+                if (action?.IsLoggable == true)
+                {
+                    var idObject = request.Id?.ToString() ?? LogHelper.GetEntityId(entity);
+                    var oldValueJson = LogHelper.ToLogJson(entity);
+                    await _logRepository.Add(new Log(idObject, oldValue: oldValueJson, newValue: null));
+                }
                 var deleteTask = (Task)deleteMethod.Invoke(repo, new[] { entity })!;
                 await deleteTask.ConfigureAwait(false);
                 await _unitOfWork.Commit();

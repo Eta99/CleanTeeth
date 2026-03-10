@@ -1,6 +1,15 @@
+using CleanTeeth.API.DTOs.Patients;
+using CleanTeeth.API.DTOs.Roles;
 using CleanTeeth.API.Jobs;
 using CleanTeeth.API.Middlewares;
+using CleanTeeth.API.ReferenceCrud;
+using CleanTeeth.API.ReferenceCrud.Mappers;
 using CleanTeeth.Application;
+using CleanTeeth.Application.Features.Patients.Queries.GetPatientDetail;
+using CleanTeeth.Application.Features.Patients.Queries.GetPatientsList;
+using CleanTeeth.Application.Features.Roles.Queries.GetRoleDetail;
+using CleanTeeth.Application.Features.Roles.Queries.GetRolesList;
+using CleanTeeth.Domain.Entities;
 using CleanTeeth.Infrastructure;
 using CleanTeeth.Persistence;
 using Microsoft.AspNetCore.Authentication.Negotiate;
@@ -39,6 +48,10 @@ builder.Services.AddScoped<CleanTeeth.Application.Contracts.Services.ICurrentUse
 builder.Services.AddPersistenceServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
+
+// Reference CRUD: мапперы для справочников (api/ref/...)
+builder.Services.AddScoped<IReferenceCrudMapper<Role, RoleListDTO, RoleDetailDTO, CreateRoleDto, UpdateRoleDto>, RoleReferenceCrudMapper>();
+builder.Services.AddScoped<IReferenceCrudMapper<Patient, PatientListDTO, PatientDetailDTO, CreatePatientDTO, UpdatePatientDTO>, PatientReferenceCrudMapper>();
 
 
 
