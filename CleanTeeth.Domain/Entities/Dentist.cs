@@ -1,4 +1,5 @@
-﻿using CleanTeeth.Domain.Exceptions;
+using CleanTeeth.Domain.Abstractions;
+using CleanTeeth.Domain.Exceptions;
 using CleanTeeth.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -8,11 +9,21 @@ using System.Threading.Tasks;
 
 namespace CleanTeeth.Domain.Entities
 {
-    public class Dentist
+    public class Dentist : IAuditable
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; } = null!;
         public Email Email { get; private set; } = null!;
+
+        public string? CreatedBy { get; private set; }
+        public string? ModifiedBy { get; private set; }
+        public DateTime CreatedAt { get; private set; }
+        public DateTime ModifiedAt { get; private set; }
+
+        string? IAuditable.CreatedBy { get => CreatedBy; set => CreatedBy = value; }
+        string? IAuditable.ModifiedBy { get => ModifiedBy; set => ModifiedBy = value; }
+        DateTime IAuditable.CreatedAt { get => CreatedAt; set => CreatedAt = value; }
+        DateTime IAuditable.ModifiedAt { get => ModifiedAt; set => ModifiedAt = value; }
 
         private Dentist() { }
 

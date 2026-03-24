@@ -1,4 +1,4 @@
-﻿using CleanTeeth.Domain.Entities;
+using CleanTeeth.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -21,6 +21,9 @@ namespace CleanTeeth.Persistence.Configurations
             {
                 action.Property(e => e.Value).HasColumnName("Email").HasMaxLength(254);
             });
+
+            builder.Property(e => e.CreatedBy).HasMaxLength(256);
+            builder.Property(e => e.ModifiedBy).HasMaxLength(256);
 
         }
     }
