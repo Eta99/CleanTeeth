@@ -47,7 +47,11 @@ namespace CleanTeeth.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<Patient>> Create([FromBody] Patient entity)
         {            
-            var result = await _mediator.Send(new CreateCommand<Patient> { Entity = entity });
+            var result = await _mediator.Send(new CreateCommand<Patient>
+            {
+                Entity = entity,
+                RequiredActionName = "Create:Patient"
+            });
             return Ok(result);
         }
 
@@ -59,7 +63,12 @@ namespace CleanTeeth.API.Controllers
         {
             try
             {
-                await _mediator.Send(new UpdateCommand<Patient> { Id = id, Entity = entity });
+                await _mediator.Send(new UpdateCommand<Patient>
+                {
+                    Id = id,
+                    Entity = entity,
+                    RequiredActionName = "Update:Patient"
+                });
                 return NoContent();
             }
             catch (Application.Exceptions.NotFoundException)

@@ -52,7 +52,11 @@ namespace CleanTeeth.API.ReferenceCrud
         public virtual async Task<ActionResult<TDetailDto>> Create([FromBody] TCreateDto dto, CancellationToken cancellationToken = default)
         {
             var entity = _mapper.ToEntity(dto);
-            var created = await _mediator.Send(new CreateCommand<TEntity> { Entity = entity });
+            var created = await _mediator.Send(new CreateCommand<TEntity>
+            {
+                Entity = entity,
+                RequiredActionName = $"Create:{typeof(TEntity).Name}"
+            });
             var detailDto = _mapper.ToDetailDto(created);
             var resourceId = _mapper.GetId(created);
             return CreatedAtAction("Get", new { id = resourceId }, detailDto);
@@ -67,7 +71,12 @@ namespace CleanTeeth.API.ReferenceCrud
             if (entity == null)
                 return NotFound();
             _mapper.ApplyUpdate(entity, dto);
-            await _mediator.Send(new UpdateCommand<TEntity> { Id = id, Entity = entity });
+            await _mediator.Send(new UpdateCommand<TEntity>
+            {
+                Id = id,
+                Entity = entity,
+                RequiredActionName = $"Update:{typeof(TEntity).Name}"
+            });
             return NoContent();
         }
 

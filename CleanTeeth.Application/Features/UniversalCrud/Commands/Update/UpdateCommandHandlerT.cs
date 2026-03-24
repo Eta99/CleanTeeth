@@ -1,9 +1,9 @@
-using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Contracts.Persistence;
+using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Exceptions;
 using CleanTeeth.Application.Features.UniversalCrud;
+using CleanTeeth.Application.Services;
 using CleanTeeth.Application.Utilities;
-using CleanTeeth.Domain.Entities;
 
 namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
 {
@@ -11,13 +11,13 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IRepositoryLongKey<Log> _logRepository;
+        private readonly ChangeLogSession _changeLogSession;
 
-        public UpdateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository)
+        public UpdateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, ChangeLogSession changeLogSession)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
-            _logRepository = logRepository;
+            _changeLogSession = changeLogSession;
         }
 
         public async Task Handle(UpdateCommand<TEntity> request)
@@ -31,43 +31,42 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
 
             var idObject = request.Id?.ToString() ?? LogHelper.GetEntityId(request.Entity);
             var isGuidKey = GetRepositoryInterface(repoType)?.GetGenericTypeDefinition() == typeof(IRepository<>);
-            TEntity? oldEntity = null;
+            TEntity? oldEntity = _changeLogSession.EntityForTypedUpdate as TEntity;
 
-            if (isGuidKey && Guid.TryParse(idObject, out var guidId))
+            if (oldEntity == null)
             {
-                var repoInterface = typeof(IRepository<>).MakeGenericType(entityType);
-                var getById = repoInterface.GetMethod("GetById")!;
-                var task = (Task)getById.Invoke(repo, new object[] { guidId })!;
-                await task.ConfigureAwait(false);
-                oldEntity = (TEntity?)task.GetType().GetProperty("Result")!.GetValue(task);
-            }
-            else if (long.TryParse(idObject, out var longId))
-            {
-                var repoLongInterface = typeof(IRepositoryLongKey<>).MakeGenericType(entityType);
-                var getById = repoLongInterface.GetMethod("GetById")!;
-                var task = (Task)getById.Invoke(repo, new object[] { longId })!;
-                await task.ConfigureAwait(false);
-                oldEntity = (TEntity?)task.GetType().GetProperty("Result")!.GetValue(task);
+                if (isGuidKey && Guid.TryParse(idObject, out var guidId))
+                {
+                    var repoInterface = typeof(IRepository<>).MakeGenericType(entityType);
+                    var getById = repoInterface.GetMethod("GetById")!;
+                    var task = (Task)getById.Invoke(repo, new object[] { guidId })!;
+                    await task.ConfigureAwait(false);
+                    oldEntity = (TEntity?)task.GetType().GetProperty("Result")!.GetValue(task);
+                }
+                else if (long.TryParse(idObject, out var longId))
+                {
+                    var repoLongInterface = typeof(IRepositoryLongKey<>).MakeGenericType(entityType);
+                    var getById = repoLongInterface.GetMethod("GetById")!;
+                    var task = (Task)getById.Invoke(repo, new object[] { longId })!;
+                    await task.ConfigureAwait(false);
+                    oldEntity = (TEntity?)task.GetType().GetProperty("Result")!.GetValue(task);
+                }
             }
 
             if (oldEntity == null)
                 throw new NotFoundException();
 
-            var (oldValues, newValues) = LogHelper.BuildEntityDiff(oldEntity, request.Entity, entityType);
-            var oldValueJson = LogHelper.ToLogDictJson(oldValues);
-            var newValueJson = LogHelper.ToLogDictJson(newValues);
             ApplyChanges(oldEntity, request.Entity, entityType);
 
             try
             {
                 var task = (Task)updateMethod.Invoke(repo, new object[] { oldEntity })!;
                 await task.ConfigureAwait(false);
-                await _logRepository.Add(new Log(idObject, oldValue: oldValueJson, newValue: newValueJson));
-                await _unitOfWork.Commit();
+                await _unitOfWork.Commit().ConfigureAwait(false);
             }
             catch
             {
-                await _unitOfWork.Rollback();
+                await _unitOfWork.Rollback().ConfigureAwait(false);
                 throw;
             }
         }

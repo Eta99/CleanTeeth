@@ -6,7 +6,7 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
     /// Универсальная команда создания сущности.
     /// Тип репозитория задаётся снаружи через EntityType; команда принимает уже собранную сущность.
     /// </summary>
-    public class CreateCommand : IRequest<object>, IRequireAction
+    public class CreateCommand : IRequest<object>, ILoggable
     {
         /// <summary>Тип сущности (тип репозитория).</summary>
         public required Type EntityType { get; set; }

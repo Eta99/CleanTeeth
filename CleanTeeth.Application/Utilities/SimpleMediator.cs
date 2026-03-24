@@ -1,12 +1,9 @@
 using CleanTeeth.Application.Contracts.Services;
 using CleanTeeth.Application.Exceptions;
+using CleanTeeth.Application.Services;
 using FluentValidation;
 using FluentValidation.Results;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CleanTeeth.Application.Utilities
 {
@@ -21,40 +18,73 @@ namespace CleanTeeth.Application.Utilities
 
         public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
         {
-            await ApplyValidations(request);
-            await CheckRequiredAction(request);
+            await ApplyValidations(request).ConfigureAwait(false);
+            await CheckRequiredAction(request).ConfigureAwait(false);
 
-            var handlerType = typeof(IRequestHandler<,>)
-        .MakeGenericType(request.GetType(), typeof(TResponse));
+            MediatorChangeLogCoordinator? logCoordinator = null;
+            if (request is ILoggable)
+                logCoordinator = serviceProvider.GetRequiredService<MediatorChangeLogCoordinator>();
 
-            var handler = serviceProvider.GetService(handlerType);
+            if (logCoordinator != null)
+                await logCoordinator.PrepareAsync(request).ConfigureAwait(false);
 
-            if (handler is null)
+            try
             {
-                throw new MediatorException($"Handler was not found for {request.GetType().Name}");
+                var handlerType = typeof(IRequestHandler<,>)
+                    .MakeGenericType(request.GetType(), typeof(TResponse));
+
+                var handler = serviceProvider.GetService(handlerType);
+
+                if (handler is null)
+                    throw new MediatorException($"Handler was not found for {request.GetType().Name}");
+
+                var method = handlerType.GetMethod("Handle")!;
+                var result = await ((Task<TResponse>)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
+
+                if (logCoordinator != null)
+                    await logCoordinator.PersistAfterSuccessAsync(request, result).ConfigureAwait(false);
+
+                return result;
             }
-
-            var method = handlerType.GetMethod("Handle")!;
-            return await (Task<TResponse>)method.Invoke(handler, new object[] { request })!;
-
+            catch
+            {
+                logCoordinator?.DiscardPrepared();
+                throw;
+            }
         }
 
         public async Task Send(IRequest request)
         {
-            await ApplyValidations(request);
-            await CheckRequiredAction(request);
+            await ApplyValidations(request).ConfigureAwait(false);
+            await CheckRequiredAction(request).ConfigureAwait(false);
 
-            var handlerType = typeof(IRequestHandler<>).MakeGenericType(request.GetType());
+            MediatorChangeLogCoordinator? logCoordinator = null;
+            if (request is ILoggable)
+                logCoordinator = serviceProvider.GetRequiredService<MediatorChangeLogCoordinator>();
 
-            var handler = serviceProvider.GetService(handlerType);
+            if (logCoordinator != null)
+                await logCoordinator.PrepareAsync(request).ConfigureAwait(false);
 
-            if (handler is null)
+            try
             {
-                throw new MediatorException($"Handler was not found for {request.GetType().Name}");
-            }
+                var handlerType = typeof(IRequestHandler<>).MakeGenericType(request.GetType());
 
-            var method = handlerType.GetMethod("Handle")!;
-            await (Task)method.Invoke(handler, new object[] { request })!;
+                var handler = serviceProvider.GetService(handlerType);
+
+                if (handler is null)
+                    throw new MediatorException($"Handler was not found for {request.GetType().Name}");
+
+                var method = handlerType.GetMethod("Handle")!;
+                await ((Task)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
+
+                if (logCoordinator != null)
+                    await logCoordinator.PersistAfterSuccessAsync(request, response: null).ConfigureAwait(false);
+            }
+            catch
+            {
+                logCoordinator?.DiscardPrepared();
+                throw;
+            }
         }
 
         private Task CheckRequiredAction(object request)
@@ -80,15 +110,13 @@ namespace CleanTeeth.Application.Utilities
                 var validateMethod = validatorType.GetMethod("ValidateAsync");
                 var taskToValidate = (Task)validateMethod!.Invoke(validator, new object[] { request, CancellationToken.None })!;
 
-                await taskToValidate;
+                await taskToValidate.ConfigureAwait(false);
 
                 var result = taskToValidate.GetType().GetProperty("Result");
                 var validationResult = (ValidationResult)result!.GetValue(taskToValidate)!;
 
                 if (!validationResult.IsValid)
-                {
                     throw new CustomValidationException(validationResult);
-                }
             }
         }
     }

@@ -6,7 +6,7 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
     /// Универсальная команда удаления сущности по Id.
     /// Тип репозитория задаётся снаружи через EntityType.
     /// </summary>
-    public class DeleteCommand : IRequest, IRequireAction
+    public class DeleteCommand : IRequest, ILoggable
     {
         /// <summary>Тип сущности (тип репозитория).</summary>
         public required Type EntityType { get; set; }

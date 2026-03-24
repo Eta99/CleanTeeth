@@ -1,8 +1,6 @@
-using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Contracts.Persistence;
-using CleanTeeth.Application.Features.UniversalCrud;
+using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Utilities;
-using CleanTeeth.Domain.Entities;
 
 namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
 {
@@ -10,13 +8,11 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IRepositoryLongKey<Log> _logRepository;
 
-        public CreateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, IRepositoryLongKey<Log> logRepository)
+        public CreateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
-            _logRepository = logRepository;
         }
 
         public async Task<TEntity> Handle(CreateCommand<TEntity> request)
@@ -32,16 +28,13 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Create
             {
                 var task = (Task)addMethod.Invoke(repo, new object[] { request.Entity })!;
                 await task.ConfigureAwait(false);
-                var result = (TEntity)task.GetType().GetProperty(nameof(Task<object>.Result))!.GetValue(task)!;
-                var idObject = LogHelper.GetEntityId(result);
-                var newValueJson = LogHelper.ToLogJson(result);
-                await _logRepository.Add(new Log(idObject, oldValue: null, newValue: newValueJson));
-                await _unitOfWork.Commit();
+                var result = (TEntity)task.GetType().GetProperty("Result")!.GetValue(task)!;
+                await _unitOfWork.Commit().ConfigureAwait(false);
                 return result;
             }
             catch
             {
-                await _unitOfWork.Rollback();
+                await _unitOfWork.Rollback().ConfigureAwait(false);
                 throw;
             }
         }

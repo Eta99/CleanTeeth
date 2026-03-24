@@ -6,7 +6,7 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
     /// Универсальная команда обновления сущности.
     /// Тип репозитория задаётся снаружи через EntityType.
     /// </summary>
-    public class UpdateCommand : IRequest, IRequireAction
+    public class UpdateCommand : IRequest, ILoggable
     {
         /// <summary>Тип сущности (тип репозитория).</summary>
         public required Type EntityType { get; set; }

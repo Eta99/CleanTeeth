@@ -11,7 +11,14 @@ namespace CleanTeeth.Persistence.Repositories
         {
         }
 
-        public Task<AppAction?> GetByNameAsync(string name, CancellationToken cancellationToken = default) =>
-            context.Set<AppAction>().FirstOrDefaultAsync(a => a.Name == name, cancellationToken);
+        public Task<AppAction?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Task.FromResult<AppAction?>(null);
+
+            var key = name.Trim();
+            return context.Set<AppAction>()
+                .FirstOrDefaultAsync(a => a.Name.ToLower() == key.ToLower(), cancellationToken);
+        }
     }
 }
