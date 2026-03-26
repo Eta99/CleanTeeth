@@ -1,7 +1,6 @@
 using CleanTeeth.Application.Contracts.Persistence;
 using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Exceptions;
-using CleanTeeth.Application.Services;
 using CleanTeeth.Application.Utilities;
 
 namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
@@ -10,13 +9,11 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ChangeLogSession _changeLogSession;
 
-        public DeleteCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, ChangeLogSession changeLogSession)
+        public DeleteCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
-            _changeLogSession = changeLogSession;
         }
 
         public async Task Handle(DeleteCommand<TEntity> request)
@@ -27,7 +24,7 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Delete
             var repoInterface = typeof(IRepository<>).MakeGenericType(entityType);
             var isGuidKey = GetRepositoryInterface(repoType)?.GetGenericTypeDefinition() == typeof(IRepository<>);
 
-            object? entity = _changeLogSession.EntityForDelete;
+            object? entity = null;
 
             if (entity == null)
             {

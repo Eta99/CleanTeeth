@@ -50,46 +50,9 @@ namespace CleanTeeth.Application.Services
         public async Task PersistAfterSuccessAsync(object request, object? response,
             CancellationToken cancellationToken = default)
         {
-            if (request is not ILoggable loggable)
-                return;
-
-            var action = await _actionRepository
-                .GetByNameAsync(loggable.RequiredActionName, cancellationToken)
-                .ConfigureAwait(false);
-            if (action is not null && !action.IsLoggable)
-            {
-                _session.Clear();
-                return;
-            }
-
-            try
-            {
-                var rt = request.GetType();
-
-                if (request is CreateCommand && response != null)
-                {
-                    await AddCreateLogAsync(response).ConfigureAwait(false);
-                }
-                else if (rt.IsGenericType && rt.GetGenericTypeDefinition() == typeof(CreateCommand<>) &&
-                         response != null)
-                {
-                    await AddCreateLogAsync(response).ConfigureAwait(false);
-                }
-                else if (TypeNameSuggestsDelete(rt))
-                {
-                    await PersistDeleteUsingSessionAsync(request, rt).ConfigureAwait(false);
-                }
-                else if (TypeNameSuggestsUpdate(rt))
-                {
-                    await PersistUpdateFromSessionAsync().ConfigureAwait(false);
-                }
-
-                await _unitOfWork.Commit().ConfigureAwait(false);
-            }
-            finally
-            {
-                _session.Clear();
-            }
+            // Legacy no-op: audit logging moved to SaveChangesInterceptor.
+            await Task.CompletedTask.ConfigureAwait(false);
+            _session.Clear();
         }
 
         private static bool TypeNameSuggestsDelete(Type type) =>

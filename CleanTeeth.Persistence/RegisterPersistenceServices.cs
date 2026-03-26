@@ -1,15 +1,13 @@
 using CleanTeeth.Application.Contracts.Persistence;
+using CleanTeeth.Application.Contracts.Infrastructure;
 using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Domain.Entities;
+using CleanTeeth.Persistence.Interceptors;
 using CleanTeeth.Persistence.Repositories;
+using CleanTeeth.Persistence.Services;
 using CleanTeeth.Persistence.UnitsOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CleanTeeth.Persistence
 {
@@ -17,8 +15,12 @@ namespace CleanTeeth.Persistence
     {
         public static IServiceCollection AddPersistenceServices(this IServiceCollection services)
         {
-            services.AddDbContext<CleanTeethDbContext>(options =>
-                options.UseSqlServer("name=CleanTeethConnectionString"));
+            services.AddScoped<IAuditScopeAccessor, AuditScopeAccessor>();
+            services.AddScoped<AuditSaveChangesInterceptor>();
+            services.AddDbContext<CleanTeethDbContext>((serviceProvider, options) =>
+                options
+                    .UseSqlServer("name=CleanTeethConnectionString")
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
 
             services.AddScoped<IDentalOfficeRepository, DentalOfficeRepository>();
             services.AddScoped<IPatientRepository, PatientRepository>();

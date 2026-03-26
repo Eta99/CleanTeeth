@@ -2,7 +2,6 @@ using CleanTeeth.Application.Contracts.Persistence;
 using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Exceptions;
 using CleanTeeth.Application.Features.UniversalCrud;
-using CleanTeeth.Application.Services;
 using CleanTeeth.Application.Utilities;
 
 namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
@@ -11,13 +10,11 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ChangeLogSession _changeLogSession;
 
-        public UpdateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork, ChangeLogSession changeLogSession)
+        public UpdateCommandHandler(IServiceProvider serviceProvider, IUnitOfWork unitOfWork)
         {
             _serviceProvider = serviceProvider;
             _unitOfWork = unitOfWork;
-            _changeLogSession = changeLogSession;
         }
 
         public async Task Handle(UpdateCommand<TEntity> request)
@@ -31,7 +28,7 @@ namespace CleanTeeth.Application.Features.UniversalCrud.Commands.Update
 
             var idObject = request.Id?.ToString() ?? LogHelper.GetEntityId(request.Entity);
             var isGuidKey = GetRepositoryInterface(repoType)?.GetGenericTypeDefinition() == typeof(IRepository<>);
-            TEntity? oldEntity = _changeLogSession.EntityForTypedUpdate as TEntity;
+            TEntity? oldEntity = null;
 
             if (oldEntity == null)
             {

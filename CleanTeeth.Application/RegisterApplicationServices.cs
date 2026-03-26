@@ -32,8 +32,6 @@ namespace CleanTeeth.Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddTransient<IMediator, SimpleMediator>();
-            services.AddScoped<ChangeLogSession>();
-            services.AddScoped<MediatorChangeLogCoordinator>();
             services.AddScoped<IEnsureCurrentUserService, EnsureCurrentUserService>();
 
             services.Scan(scan => scan.FromAssembliesOf(typeof(RegisterApplicationServices))

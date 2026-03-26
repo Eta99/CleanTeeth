@@ -1,6 +1,7 @@
 using CleanTeeth.Application.Contracts.Services;
+using CleanTeeth.Application.Contracts.Infrastructure;
+using CleanTeeth.Application.Contracts.Repositories;
 using CleanTeeth.Application.Exceptions;
-using CleanTeeth.Application.Services;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,71 +21,58 @@ namespace CleanTeeth.Application.Utilities
         {
             await ApplyValidations(request).ConfigureAwait(false);
             await CheckRequiredAction(request).ConfigureAwait(false);
+            var auditScope = await BuildAuditScopeAsync(request).ConfigureAwait(false);
 
-            MediatorChangeLogCoordinator? logCoordinator = null;
-            if (request is ILoggable)
-                logCoordinator = serviceProvider.GetRequiredService<MediatorChangeLogCoordinator>();
+            using var _ = serviceProvider.GetRequiredService<IAuditScopeAccessor>().BeginScope(auditScope);
+            var handlerType = typeof(IRequestHandler<,>)
+                .MakeGenericType(request.GetType(), typeof(TResponse));
 
-            if (logCoordinator != null)
-                await logCoordinator.PrepareAsync(request).ConfigureAwait(false);
+            var handler = serviceProvider.GetService(handlerType);
 
-            try
-            {
-                var handlerType = typeof(IRequestHandler<,>)
-                    .MakeGenericType(request.GetType(), typeof(TResponse));
+            if (handler is null)
+                throw new MediatorException($"Handler was not found for {request.GetType().Name}");
 
-                var handler = serviceProvider.GetService(handlerType);
-
-                if (handler is null)
-                    throw new MediatorException($"Handler was not found for {request.GetType().Name}");
-
-                var method = handlerType.GetMethod("Handle")!;
-                var result = await ((Task<TResponse>)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
-
-                if (logCoordinator != null)
-                    await logCoordinator.PersistAfterSuccessAsync(request, result).ConfigureAwait(false);
-
-                return result;
-            }
-            catch
-            {
-                logCoordinator?.DiscardPrepared();
-                throw;
-            }
+            var method = handlerType.GetMethod("Handle")!;
+            var result = await ((Task<TResponse>)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
+            return result;
         }
 
         public async Task Send(IRequest request)
         {
             await ApplyValidations(request).ConfigureAwait(false);
             await CheckRequiredAction(request).ConfigureAwait(false);
+            var auditScope = await BuildAuditScopeAsync(request).ConfigureAwait(false);
 
-            MediatorChangeLogCoordinator? logCoordinator = null;
-            if (request is ILoggable)
-                logCoordinator = serviceProvider.GetRequiredService<MediatorChangeLogCoordinator>();
+            using var _ = serviceProvider.GetRequiredService<IAuditScopeAccessor>().BeginScope(auditScope);
+            var handlerType = typeof(IRequestHandler<>).MakeGenericType(request.GetType());
 
-            if (logCoordinator != null)
-                await logCoordinator.PrepareAsync(request).ConfigureAwait(false);
+            var handler = serviceProvider.GetService(handlerType);
 
-            try
+            if (handler is null)
+                throw new MediatorException($"Handler was not found for {request.GetType().Name}");
+
+            var method = handlerType.GetMethod("Handle")!;
+            await ((Task)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
+        }
+
+        private async Task<AuditScopeContext> BuildAuditScopeAsync(object request)
+        {
+            if (request is not ILoggable loggableRequest)
+                return new AuditScopeContext { Enabled = false };
+
+            var actionRepository = serviceProvider.GetRequiredService<IAppActionRepository>();
+            var action = await actionRepository
+                .GetByNameAsync(loggableRequest.RequiredActionName)
+                .ConfigureAwait(false);
+
+            var currentUser = (ICurrentUserContext?)serviceProvider.GetService(typeof(ICurrentUserContext));
+            return new AuditScopeContext
             {
-                var handlerType = typeof(IRequestHandler<>).MakeGenericType(request.GetType());
-
-                var handler = serviceProvider.GetService(handlerType);
-
-                if (handler is null)
-                    throw new MediatorException($"Handler was not found for {request.GetType().Name}");
-
-                var method = handlerType.GetMethod("Handle")!;
-                await ((Task)method.Invoke(handler, new object[] { request })!).ConfigureAwait(false);
-
-                if (logCoordinator != null)
-                    await logCoordinator.PersistAfterSuccessAsync(request, response: null).ConfigureAwait(false);
-            }
-            catch
-            {
-                logCoordinator?.DiscardPrepared();
-                throw;
-            }
+                Enabled = true,
+                IsLoggableAction = action?.IsLoggable ?? true,
+                ActionName = loggableRequest.RequiredActionName,
+                UserId = currentUser?.UserId?.ToString() ?? currentUser?.Login
+            };
         }
 
         private Task CheckRequiredAction(object request)
